@@ -75,10 +75,10 @@
             <strong>Example Input Format:</strong><br>
             - Number of sides: 4<br>
             - Bearing and Degrees:<br>
-              &nbsp;&nbsp;1) N 45° E, 50 meters<br>
-              &nbsp;&nbsp;2) S 45° E, 100 meters<br>
-              &nbsp;&nbsp;3) S 45° W, 50 meters<br>
-              &nbsp;&nbsp;4) N 45° W, 100 meters<br>
+              &nbsp;&nbsp;1) N 45 E, 50 meters<br>
+              &nbsp;&nbsp;2) S 45 E, 100 meters<br>
+              &nbsp;&nbsp;3) S 45 W, 50 meters<br>
+              &nbsp;&nbsp;4) N 45 W, 100 meters<br>
         </div>
 
         <form id="landForm">
@@ -103,7 +103,6 @@
         let sides = 0;
         let sideData = [];
 
-        // Generate input fields for each side
         sidesInput.addEventListener('change', () => {
             sideInputsDiv.innerHTML = '';
             sides = parseInt(sidesInput.value);
@@ -125,7 +124,6 @@
             }
         });
 
-        // Parse bearing input and convert to radians
         function parseBearing(bearing) {
             const regex = /([NS])\s*(\d+)\s*([EW])/i;
             const match = bearing.match(regex);
@@ -141,7 +139,6 @@
             return angle;
         }
 
-        // Generate the drawing and calculate the area
         generateBtn.addEventListener('click', () => {
             sideData = [];
             for (let i = 1; i <= sides; i++) {
