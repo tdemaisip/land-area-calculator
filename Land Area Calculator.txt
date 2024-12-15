@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Land Property Area Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        header {
+            background-color: #4CAF50;
+            color: #fff;
+            text-align: center;
+            padding: 1rem;
+            font-size: 1.5rem;
+        }
+        main {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        label {
+            font-weight: bold;
+        }
+        input, button {
+            display: block;
+            width: 100%;
+            margin: 0.5rem 0;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: #fff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            display: block;
+            margin: 1.5rem auto;
+        }
+        .example {
+            font-style: italic;
+            margin: 1.5rem 0;
+            background-color: #e7f3e7;
+            padding: 1rem;
+            border-left: 5px solid #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        Real Property Land Area Generator
+    </header>
+    <main>
+        <h1>Land Area Drawing Tool</h1>
+        <p>Enter the technical description of your land property to generate its shape and calculate the area.</p>
+        <div class="example">
+            <strong>Example Input Format:</strong><br>
+            - Number of sides: 4<br>
+            - Bearing and Degrees:<br>
+              &nbsp;&nbsp;1) N 45° E, 50 meters<br>
+              &nbsp;&nbsp;2) S 45° E, 100 meters<br>
+              &nbsp;&nbsp;3) S 45° W, 50 meters<br>
+              &nbsp;&nbsp;4) N 45° W, 100 meters<br>
+        </div>
+
+        <form id="landForm">
+            <label for="sides">Number of Sides:</label>
+            <input type="number" id="sides" name="sides" min="3" required>
+            <div id="sideInputs"></div>
+            <button type="button" id="generateBtn">Generate Drawing</button>
+        </form>
+        <canvas id="landCanvas" width="600" height="600"></canvas>
+        <h2 id="totalArea"></h2>
+    </main>
+
+    <script>
+        const form = document.getElementById('landForm');
+        const sidesInput = document.getElementById('sides');
+        const sideInputsDiv = document.getElementById('sideInputs');
+        const generateBtn = document.getElementById('generateBtn');
+        const canvas = document.getElementById('landCanvas');
+        const ctx = canvas.getContext('2d');
+        const totalAreaDisplay = document.getElementById('totalArea');
+
+        let sides = 0;
+        let sideData = [];
+
+        // Generate input fields for each side
+        sidesInput.addEventListener('change', () => {
+            sideInputsDiv.innerHTML = '';
+            sides = parseInt(sidesInput.value);
+            if (sides >= 3) {
+                for (let i = 1; i <= sides; i++) {
+                    const label = document.createElement('label');
+                    label.textContent = `Side ${i} - Bearing (e.g., N 45 E) and Length (meters):`;
+
+                    const input = document.createElement('input');
+                    input.setAttribute('type', 'text');
+                    input.setAttribute('id', `side${i}`);
+                    input.setAttribute('name', `side${i}`);
+                    input.setAttribute('placeholder', 'N 45 E, 50');
+                    input.required = true;
+
+                    sideInputsDiv.appendChild(label);
+                    sideInputsDiv.appendChild(input);
+                }
+            }
+        });
+
+        // Parse bearing input and convert to radians
+        function parseBearing(bearing) {
+            const regex = /([NS])\s*(\d+)\s*([EW])/i;
+            const match = bearing.match(regex);
+
+            if (!match) return null;
+
+            const [, ns, degrees, ew] = match;
+            let angle = (parseFloat(degrees) * Math.PI) / 180;
+
+            if (ns === 'S') angle = Math.PI - angle;
+            if (ew === 'W') angle = 2 * Math.PI - angle;
+
+            return angle;
+        }
+
+        // Generate the drawing and calculate the area
+        generateBtn.addEventListener('click', () => {
+            sideData = [];
+            for (let i = 1; i <= sides; i++) {
+                const input = document.getElementById(`side${i}`).value;
+                const [bearing, length] = input.split(',').map(item => item.trim());
+                const angle = parseBearing(bearing);
+                if (!angle || isNaN(length)) {
+                    alert(`Invalid input for Side ${i}. Follow the format: N 45 E, 50`);
+                    return;
+                }
+                sideData.push({ angle, length: parseFloat(length) });
+            }
+            drawShapeAndCalculateArea();
+        });
+
+        function drawShapeAndCalculateArea() {
+            let x = canvas.width / 2, y = canvas.height / 2;
+            let points = [{ x, y }];
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+
+            for (const side of sideData) {
+                x += side.length * Math.cos(side.angle);
+                y -= side.length * Math.sin(side.angle);
+                points.push({ x, y });
+                ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(76, 175, 80, 0.3)';
+            ctx.fill();
+
+            let area = 0;
+            for (let i = 0; i < points.length - 1; i++) {
+                area += points[i].x * points[i + 1].y - points[i + 1].x * points[i].y;
+            }
+            area = Math.abs(area) / 2;
+            totalAreaDisplay.textContent = `Total Land Area: ${area.toFixed(2)} square meters`;
+        }
+    </script>
+</body>
+</html>
